@@ -1,0 +1,631 @@
+FORMAT: 1A
+HOST: http://lacdcfs.org/
+
+# DCFS: Time2Connect
+
+The Time2Connect API serves case, visit request, and visit information to requestors,
+coordinators, and monitors to help facilitate scheduling visits between foster
+children and their biological parents.
+
+Schema definitions borrow heavily from [schema.org](http://schema.org/).
+
+# Group Cases
+
+## Case [/cases/{caseID}]
+A case represents the entire file for a given family.
+
+A case is displayed as "Action Required" if any of its `Requests` are in the `actionRequired` state.
+
++ Parameters
+    + caseID: 123456789012 (number)
+
++ Attributes (CaseSummary)
+    + requestor (_User) - Corresponds to the CSW who initiated the request
+    + parents (array[Parent])
+    + children (array[Participant])
+    + fosterParents (array[Parent])
+    + requests (array[Request])
+
+### Get Case details [GET]
+Retrieves a case with the given caseID.
+
++ Response 200 (application/json)
+    + Attributes (Case)
+
+## Cases [/cases]
+
++ Attributes (array[Case])
+
+### List all active Cases [GET]
+Returns a list of all active cases visible to the user.
+
++ Response 200 (application/json)
+    + Attributes (Cases)
+
+## CaseSummary [/cases/autocomplete{?input}]
+Summary of a case for display in autocomplete search results.
+
++ Parameters
+    + input: Har (string)
+
++ Attributes (object)
+    + caseID: 123456789012 (number)
+    + parents (array[ParticipantName])
+    + children (array[ParticipantName])
+
+### Search all Cases [GET]
+Returns a list of summaries for all cases, active or inactive, whose `caseID` or participants names match the `input` string.
+
++ Response 200 (application/json)
+    + Attributes (array[CaseSummary])
+
+## Request [/cases/{caseID}/requests/{requestID}]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+
++ Attributes (_Request)
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + requestDate: `2018-06-03T13:18:51.003-07:00` (string) - The date this request was created
+    + visitType (enum)
+        + Parent - One parent included in the `Request`
+        + Parents - Multiple parents included in the `Request`
+        + Sibling - No parents included in the `Request`
+    + actionRequired: true (boolean) - `true` if there are 0 future visits in the `EventScheduled` state OR there are 1 or more future visits in the `EventIncomplete` state
+
+### Get Request details [GET]
+
++ Response 200 (application/json)
+    + Attributes (Request)
+
+### Modify Request details [PUT]
+
++ Request (application/json)
+    + Attributes (Request)
+
++ Response 204
+
+## Requests [/cases/{caseID}/requests]
+
++ Parameters
+    + caseID: 123456789012 (number)
+
++ Attributes (array[Request])
+
+### List all Case Visit Requests [GET]
+
++ Response 200 (application/json)
+    + Attributes (Requests)
+
+### Create a Visit Request [POST]
+Creates a new visit request.
+
++ Request (application/json)
+    + Attributes (_Request)
+        + meetingTimes (array[TimeSlot])
+
++ Response 201 (application/json)
+    + Headers
+
+            Location: /cases/123456789012/requests/234567890123
+
+    + Attributes (Request)
+
+## MinuteOrder [/cases/{caseID}/minuteOrders/{minuteOrderID}]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + minuteOrderID: 678901234567 (number)
+
++ Attributes (object)
+    + caseID: 123456789012 (number)
+    + minuteOrderID: 678901234567 (number)
+    + createdAt: `2018-06-03T13:18:51.003-07:00` (string)
+    + url: http://lacdcfs.org/minute_orders/678901234567.pdf (string)
+
+### Get Minute Order [GET]
+
++ Response 200 (application/json)
+    + Attributes (MinuteOrder)
+
+## MinuteOrders [/cases/{caseID}/minuteOrders]
+
++ Parameters
+    + caseID: 123456789012 (number)
+
++ Attributes (array[MinuteOrder])
+
+### List all Case Minute Orders [GET]
+
++ Response 200 (application/json)
+    + Attributes (MinuteOrders)
+
+# Group Visits
+
+## Visit [/cases/{caseID}/requests/{requestID}/visits/{visitID}]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + visitID: 345678901234 (number)
+
++ Attributes (_Visit)
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + visitID: 345678901234 (number)
+    + recurringID: 567890123456 (number) - Represents a unique ID shared amongst all events in a recurring series, `null` if the event is not recurring.
+    + eventStatus (EventStatusType)
+    + rsvpResponses (array)
+        + (object)
+            + Include _Participant
+            + `rsvpResponse`: RsvpResponseYes, RsvpResponseNo, RsvpResponseMaybe (enum)
+    + visitReport (object)
+        + author (_User)
+        + Include VisitStart
+        + Include VisitEnd
+        + attendance (array[ParticipantAttendance])
+        + notes (array[Note])
+        + Include VisitRating
+
+### Get Visit [GET]
+
++ Response 200 (application/json)
+    + Attributes (Visit)
+
+### Modify Visit [PUT]
+Updates a single visit, a subset of future visits in a recurring series, or all future visits in a recurring series.
+
+Suppose the user creates a visit with 10 recurring visits. After the first 2 of 10 visits have occurred, suppose
+they start modifying the 5th visit within that series. If `scope == single`, only that 5th visit will be modified.
+aIf `scope == following`, visits 5 through 10 will be modified. If `scope == all`, visits 3 through 10 will be modified.
+
++ Request (application/json)
+    + Attributes (Visit)
+        + scope (enum) - Corresponds to the different methods of editing a recurring visit.
+            + single - This visit only
+            + following - This and following visits
+            + all - All visits
+
++ Response 200 (application/json)
+Returns an array including all modified visits.
+
+    + Attributes (Visits)
+
++ Response 403 (application/json)
+Returns an error response if `scope` is broader than `recurring`.
+
+    + Attributes (object)
+        + errors (array)
+            + (object)
+                + status: 403 (string)
+                + source (object)
+                    + pointer: /data/attributes/scope (string)
+                + title: Invalid scope (string)
+                + detail: Scope cannot conflict with recurring property of Visit (string)
+
+### Update Visit Report [PATCH /cases/{caseID}/requests/{requestID}/visits/{visitID}/visitReport]
+Modifies a Visit Report for a visit in-progress.
+
++ Request Start Visit (application/json)
+Starts a visit.
+
+    + Attributes (VisitStart)
+
++ Response 204
+
++ Request End Visit (application/json)
+Ends an in progress visit. Server should update `eventStatus` to `EventFailed` if a visit ends without *all* participants having been checked in.
+
+    + Attributes (VisitEnd)
+
++ Response 204
+
++ Request Rate Visit (application/json)
+Assigns a rating to an in progress visit.
+
+    + Attributes (VisitRating)
+
++ Response 204
+
+## Visits [/cases/{caseID}/requests/{requestID}/visits]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+
++ Attributes (array[Visit])
+
+### List all Visits [GET]
+
++ Response 200 (application/json)
+    + Attributes (Visits)
+
+### Create a Visit [POST]
+Creates a new visit.
+
++ Request (application/json)
+    + Attributes (_Visit)
+
++ Response 201 (application/json)
+    + Headers
+
+            Location: /cases/123456789012/requests/234567890123/visits/345678901234
+
+    + Attributes (Visits)
+
+## Note [/cases/{caseID}/requests/{requestID}/visits/{visitID}/visitReport/notes/{index}]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + visitID: 345678901234 (number)
+    + index: 0 (number)
+
++ Attributes (object)
+    + title: Give the note a title (string)
+    + description: Enter note here (string)
+
+### Get Note [GET]
+Fetches the note at the specified index.
+
++ Response 200 (application/json)
+    + Attributes (Note)
+
+## Notes [/cases/{caseID}/requests/{requestID}/visits/{visitID}/visitReport/notes]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + visitID: 345678901234 (number)
+
++ Attributes (array[Note])
+
+### Create a Note [POST]
+Adds a note to the specified visit.
+
++ Request (application/json)
+    + Attributes (Note)
+
++ Response 201
+    + Headers
+
+            Location: /cases/123456789012/requests/234567890123/visits/345678901234/visitReport/notes/0
+
+## ParticipantAttendance [/cases/{caseID}/requests/{requestID}/visits/{visitID}/visitReport/attendance/{participantID}]
+
++ Parameters
+    + caseID: 123456789012 (number)
+    + requestID: 234567890123 (number)
+    + visitID: 345678901234 (number)
+    + participantID: 456789012345 (number)
+
++ Attributes (object)
+    + Include _Participant
+    + arrival: `2018-06-03T13:18:51.003-07:00` (string)
+
+### Check in Participant [PUT]
+Checks in the specified participant at the specified time.
+
++ Request (application/json)
+    + Attributes (ParticipantAttendance)
+
++ Response 204
+
+# Group People
+
+## User [/users/{userID}]
+A user represents any DCFS Time2Connect user with a valid login.
+
++ Parameters
+    + userID: 123456789012 (number)
+
++ Attributes (_User)
+    + image: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==` (string) - Image data encoded as a base64 string. Supported formats: PNG, JPG.
+    + Include ContactInfo
+
+### Get User details [GET]
+Retrieves a user with the given userID.
+
++ Response 200 (application/json)
+    + Attributes (User)
+
+### Update User details [PUT]
+Updates user details for the user with the specified userID.
+
++ Request (application/json)
+    + Attributes (User)
+
++ Response 200 (application/json)
+    + Attributes (User)
+
+### Get all User Visits [GET /users/{userID}/visits]
+Fetches all visits visible to the specified user, sorted chronologically.
+
++ Response 200 (application/json)
+    + Attributes (Visits)
+
+## UserAvailability [/userAvailability{?role,startDate,duration,endDate,occurances}]
+
++ Attributes (object)
+    + Include _User
+    + available: true (boolean)
+
+### Get User Availability [GET]
+Returns list of user availability, sorted by availability.
+
++ Parameters
+    + role: monitor (enum[string], optional) - Filters the results by user role
+        + Members
+            + requestor
+            + coordinator
+            + monitor
+    + startDate: `2018-06-03T13:18:51.003-07:00` (string)
+    + duration: PT2H (string) - Visit length using [ISO 8601 date format](https://en.wikipedia.org/wiki/ISO_8601)
+    + endDate: `2018-06-03T13:18:51.003-07:00` (string, optional)
+    + occurances: Monday,10:00,12:00 (string, optional) - Comma-separated `dayOfWeek`, `startTime`, and `endTime`. Include multiple `occurances` keys if there are multiple visits per week.
+
++ Response 200 (application/json)
+    + Attributes (array[UserAvailability])
+
+## PreferredContactMethod [/{resource}/{id}/preferredContactMethod]
+
++ Parameters
+    + resource: users, participants (enum)
+    + id: 345678901234 (number)
+
++ Attributes (enum)
+    + email
+    + sms
+    + telephone
+
+### Get Preferred Contact Method [GET]
+
++ Response 200 (application/json)
+    + Attributes (PreferredContactMethod)
+
+### Update Preferred Contact Method [PUT]
+
++ Request (application/json)
+    + Attributes (PreferredContactMethod)
+
++ Response 204
+
+# Group Locations
+
+The Time2Connect web client uses the [Google Maps Geocoding API](https://developers.google.com/maps/documentation/geocoding/intro)
+and [Places API Place Autocomplete service](https://developers.google.com/places/web-service/autocomplete)
+to display participant addresses and approved meeting locations on maps and
+to allow user input of custom meeting locations.
+
+`Location` objects conform to the [GeoJSON specification](http://geojson.org/)
+and are referenced by their `place_id` provided by the [Places API Web Service](https://developers.google.com/places/web-service/place-id).
+
+The web client will geocode all addresses and submit these geocodes to the
+server for caching purposes. The server should expire cached geocodes after
+30 days.
+
+## Location [/locations/{place_id}]
+
++ Parameters
+    + `place_id`: `ChIJrTLr-GyuEmsRBfy61i59si0` (string)
+
++ Attributes (object)
+    + type: Feature (enum) - Will always be `Feature`
+    + geometry (object)
+        + type: Point, LineString, MultiPoint, Polygon, MultiLineString, MultiPolygon, GeometryCollection (enum) - Will always be `Point`
+        + coordinates (array[number], nullable) - Cached geocodes. Server should expire cache after 30 days and return `null` for this key, allowing the client to regenerate coordinates using the [Google Maps Geocoding API](https://developers.google.com/maps/documentation/geocoding/intro)
+            + 125.6 (number) - Latitude
+            + 10.1 (number) - Longitude
+    + properties (object)
+        + `place_id`: `ChIJrTLr-GyuEmsRBfy61i59si0` (string) - Represents the ID corresponding to the location in the [Places API Web Service](https://developers.google.com/places/web-service/place-id)
+        + name: DCFS Pasadena Visitation Room (string)
+        + address (object)
+            + addressLocality: Los Angeles (string)
+            + addressRegion: CA (string)
+            + postalCode: 90210 (string)
+            + streetAddress: 639 Orland Hills Suite 839 (string)
+
+### Get Location [GET]
+Returns the location corresponding to the specified `place_id`.
+
++ Response 200 (application/json)
+    + Attributes (Location)
+
+### Update Location [PUT]
+Updates the location, generally to provide geocodes for server-side caching.
+
++ Request (application/json)
+    + Attributes (Location)
+
++ Response 204
+
+## Locations [/locations]
+
++ Attributes (object)
+    + type: FeatureCollection (enum) - Will always be `FeatureCollection`
+    + features (array[Location])
+
+### Get Approved Visit Locations [GET]
+Returns list of all DCFS-approved visit locations in [GeoJSON](http://geojson.org/) format.
+
++ Response 200 (application/json)
+    + Attributes (Locations)
+
+# Group Errors
+
+Error objects provide additional information about problems encountered while performing an operation. 
+
+Errors should be returned in the format specified by the [JSON API](http://jsonapi.org/format/#errors) documentation.
+Error objects **MUST** be returned as an array keyed by `errors` in the top level of a JSON API document.
+
+Below is a JSON Schema which can be used to validate the structure of an `Error` response.
+
+```
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "pointer": {
+                "type": "string"
+              }
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "errors"
+  ]
+}
+```
+
+
+# Data Structures
+
+## ContactInfo (object)
+
++ email: mailto:june@email.com (string)
++ telephone: +14738459034 (string)
++ preferredContactMethod (PreferredContactMethod)
+
+## EventStatusType (enum)
+
++ EventScheduled (string) - Visit has been confirmed and sent to participants, including past visits
++ EventCancelled (string) - Coordinator (or Requestor) has cancelled the visit
++ EventIncomplete (string) - Action required to complete scheduling
++ EventFailed (string) - Denotes the no show case
+
+## RatingValue (enum)
+
++ 1 (number)
++ 2 (number)
++ 3 (number)
++ 4 (number)
++ 5 (number)
+
+## ParticipantAvailability (object)
+
++ Include _Participant
++ Include Availability
+
+## `_Participant` (object)
+
++ participantID: 345678901234 (number) - Represent a unique identifier for any individual in the database, across all cases/requests/visits, whether referencing a parent, child, or foster parent
+
+## ParticipantName (_Participant)
+
++ familyName: Harris (string)
++ givenName: June (string)
++ additionalName: Everly (string)
+
+## Participant (ParticipantName)
+
++ gender: male, female, other (enum)
++ availableLanguage (object)
+    + name: English (string)
+    + alternateName: `en-US` (string) - Language code as defined in [IETF BCP 47 standard](https://tools.ietf.org/html/bcp47)
++ location (Location)
++ Include ContactInfo
++ Include Availability
+
+## Parent (Participant)
+
++ children (array[_Participant]) - An array of the participant's children or foster children
+
+## `_Request` (object)
+
++ startDate: `2018-06-03T13:18:51.003-07:00` (string)
++ visitationType: Monitored, Unmonitored, Overnight (enum)
++ visitFrequencyType (Plurality)
++ visitFrequency (object, nullable) - IFF `visitFrequencyType == "multiple"` THEN `visitFrequency` object will be present ELSE it should be `null` or not included
+    + count: 1 (number) - Number of occurances per iteration
+    + denominator: week, month (enum) - Length of a single iteration
+    + endDate: `2018-06-03T13:18:51.003-07:00` (string)
++ visitLength (object) - Duration of visit
+    + minimum: PT1H (string) - [ISO 8601 date format](https://en.wikipedia.org/wiki/ISO_8601)
+    + maximum: PT2H (string) - [ISO 8601 date format](https://en.wikipedia.org/wiki/ISO_8601)
++ liberalizationDiscretion: true (boolean)
++ parents (array[ParticipantAvailability])
++ children (array[ParticipantAvailability])
++ notes (object)
+    + concerns: Domestic violence, PTSD, drug abuse, etc. (string)
+    + restrictions: Location, meal, toy restrictions (string)
+    + languageCulturalNeeds: English, Spanish, etc. (string)
+    + specialHealthConditions: Illnesses, injuries, etc. (string)
+    + familyGoal: Hopes for family life (string)
+    + transportation: Transportation needs of participants (string)
+
+## Availability (object)
+
++ hoursAvailable (array[TimeSlot])
+
+## TimeSlot (object)
+
++ dayOfWeek: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday (enum)
++ opens: 10:00 (string) - A point in time recurring on multiple days in the form hh:mm:ss[Z|(+|-)hh:mm]
++ closes: 12:00 (string) - A point in time recurring on multiple days in the form hh:mm:ss[Z|(+|-)hh:mm]
+
+## Plurality (enum)
+
++ single (string) - Single instance
++ multiple (string) - Multiple instances
+
+## `_Visit` (object)
+
++ visitDate: `2018-06-03T13:18:51.003-07:00` (string)
++ duration: PT2H (string) - Visit length using [ISO 8601 date format](https://en.wikipedia.org/wiki/ISO_8601)
++ recurringType (Plurality)
++ recurring (object, nullable) - IFF `recurringType == "multiple"` THEN `recurring` object will be present ELSE it should be `null` or not included
+    + startDate: `2018-06-03T13:18:51.003-07:00` (string)
+    + endDate: `2018-06-03T13:18:51.003-07:00` (string)
+    + occurances (array[TimeSlot])
++ monitor (enum)
+    + (User)
+    + (object)
+        + name: Jennifer Black (string)
+        + Include ContactInfo
++ location (Location)
++ childTransportation (array)
+    + (object)
+        + Include _Participant
+        + pickupLocation (Location)
+        + transportationType: foster, monitor, other (enum)
+
+## VisitStart (object)
+
++ visitStart: `2018-06-03T13:18:51.003-07:00` (string)
+
+## VisitEnd (object)
+
++ visitEnd: `2018-06-03T13:18:51.003-07:00` (string)
+
+## VisitRating (object)
+
++ ratingValue (RatingValue)
+
+## `_User` (object)
+
++ userID: 456789012345 (number)
++ role: requestor, coordinator, monitor (enum)
++ title: HSA, CSW, SCSW (enum)
++ name: Jonathan Marsh (string)

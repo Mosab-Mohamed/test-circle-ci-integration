@@ -1,0 +1,147 @@
+[
+	{
+		"minute_order": 4,
+		"visitation": [
+			{
+				"visitor": 1,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": null,
+				"hours": {
+					"quantity": 6,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"active": true
+			},
+			{
+				"visitor": 2,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": null,
+				"hours": {
+					"quantity": 6,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"active": false
+			}
+		]
+	},
+	{
+		"minute_order": 3,
+		"visitation": [
+			{
+				"visitor": 1,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": {
+					"quantity": 3,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"hours": {
+					"quantity": 9,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"active": true,
+				"restrictions": [
+					"MOTHER 2 IS NOT TO BE PRESENT DURING MOTHER 1'S VISITS"
+				]
+			},
+			{
+				"visitor": 2,
+				"monitored": true,
+				"liberalization_discretion": false,
+				"visits": {
+					"quantity": 1,
+					"unit": "month",
+					"requirement": "min/max"
+				},
+				"hours": {
+					"quantity": 1,
+					"unit": "month",
+					"requirement": "min/max"
+				},
+				"active": true
+			}
+		]
+	},
+	{
+		"minute_order": 2,
+		"written_schedule": true,
+		"visitation": [
+			{
+				"visitor": 1,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": {
+					"quantity": 3,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"hours": {
+					"quantity": 9,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"active": false,
+				"restrictions": null
+			},
+			{
+				"visitor": 2,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": {
+					"quantity": 1,
+					"unit": "week",
+					"requirement": "min/max"
+				},
+				"hours": {
+					"quantity": 1,
+					"unit": "week",
+					"requirement": "min/max"
+				},
+				"active": true,
+				"restrictions": [
+					"MUST CONTACT DCFS TO BE MONITORED",
+					"MUST CONDUCT VISITS AT DCFS OFFICE"
+				]
+			},
+			{
+				"visitor": 3,
+				"monitored": true,
+				"liberalization_discretion": true,
+				"visits": {
+					"quantity": 3,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"hours": {
+					"quantity": 9,
+					"unit": "week",
+					"requirement": "minimum"
+				},
+				"active": true,
+				"restrictions": null
+			}
+		]
+	},
+	{
+		"minute_order": 1,
+		"visitation": [
+			{
+				"visitor": 1,
+				"monitored": true,
+				"liberalization_discretion": false,
+				"visits": null,
+				"hours": null,
+				"active": true,
+				"restrictions": [
+					"MUST CONDUCT VISITS IN THERAPEUTIC ENVIRONMENT"
+				]
+			}
+		]
+	},
+]

@@ -1,0 +1,54 @@
+{
+  "name": "dcfs-time2connect-frontend",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "contributors": [
+    "Abdelrahman Elsaidy <xelsaidy@gmail.com>"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "serve": "parcel serve src/index.html",
+    "build": "rimraf dist/* && parcel build --no-source-maps src/index.html"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "@commitlint/cli": "^7.2.0",
+    "@commitlint/config-conventional": "^7.1.2",
+    "autoprefixer": "^9.1.5",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "babel-plugin-react-css-modules": "^3.4.2",
+    "dredd": "^5.2.0",
+    "eslint": "^4.19.1 || ^5.3.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-import-resolver-babel-module": "^5.0.0-beta.1",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.1",
+    "eslint-plugin-prettier": "^3.0.0",
+    "eslint-plugin-react": "^7.11.0",
+    "husky": "^1.1.2",
+    "lint-staged": "^7.3.0",
+    "parcel-bundler": "^1.10.2",
+    "postcss": "^7.0.5",
+    "postcss-modules": "^1.4.1",
+    "postcss-normalize": "^7.0.1",
+    "prettier": "^1.14.3",
+    "rimraf": "^2.6.2",
+    "stylelint": "^9.6.0",
+    "stylelint-config-recommended": "^2.1.0"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.0.0",
+    "core-js": "^2.5.7",
+    "prop-types": "^15.6.2",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2"
+  }
+}

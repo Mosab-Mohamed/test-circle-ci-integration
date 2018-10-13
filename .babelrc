@@ -1,0 +1,13 @@
+{
+  "presets": [
+    "@babel/preset-react",
+    ["@babel/preset-env", { "useBuiltIns": "entry" }]
+  ],
+
+  "plugins": [
+    "react-css-modules",
+    "@babel/plugin-syntax-dynamic-import",
+    "@babel/plugin-proposal-class-properties",
+    ["module-resolver", { "alias": { "~": "./src" } }]
+  ]
+}
